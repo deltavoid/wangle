@@ -8,3 +8,5 @@ install_manifest.txt
 gtest/
 bin/
 lib/
+
+_build
