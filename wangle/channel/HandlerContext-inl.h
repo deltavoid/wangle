@@ -178,12 +178,22 @@ class ContextImpl
 
   // HandlerContext overrides
   void fireRead(Rout msg) override {
+
+    DLOG(INFO) << "wangle::Contextimpl::fireRead: 1";
     auto guard = this->pipelineWeak_.lock();
+
+    DLOG(INFO) << "wangle::Contextimpl::fireRead: 2";
     if (this->nextIn_) {
+
+      DLOG(INFO) << "wangle::Contextimpl::fireRead: 3";
       this->nextIn_->read(std::forward<Rout>(msg));
     } else {
+
+      DLOG(INFO) << "wangle::Contextimpl::fireRead: 4";
       LOG(WARNING) << "read reached end of pipeline";
     }
+
+    DLOG(INFO) << "wangle::Contextimpl::fireRead: 5, end";
   }
 
   void fireReadEOF() override {
@@ -277,8 +287,14 @@ class ContextImpl
 
   // InboundLink overrides
   void read(Rin msg) override {
+
+    DLOG(INFO) << "wangle::Contextimpl::read: 1";
     auto guard = this->pipelineWeak_.lock();
+
+    DLOG(INFO) << "wangle::Contextimpl::read: 2";
     this->handler_->read(this, std::forward<Rin>(msg));
+
+    DLOG(INFO) << "wangle::Contextimpl::read: 3, end";
   }
 
   void readEOF() override {
