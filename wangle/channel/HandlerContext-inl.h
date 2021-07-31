@@ -228,14 +228,28 @@ class ContextImpl
     }
   }
 
-  folly::Future<folly::Unit> fireWrite(Wout msg) override {
+  folly::Future<folly::Unit> fireWrite(Wout msg) override 
+  {
+
+    DLOG(INFO) << "wangle::contextImpl::fireWrite: 1";
     auto guard = this->pipelineWeak_.lock();
     if (this->nextOut_) {
-      return this->nextOut_->write(std::forward<Wout>(msg));
+
+      // return this->nextOut_->write(std::forward<Wout>(msg));
+
+      DLOG(INFO) << "wangle::contextImpl::fireWrite: 2";
+      auto ret = this->nextOut_->write(std::forward<Wout>(msg));
+
+      DLOG(INFO) << "wangle::contextImpl::fireWrite: 3, end";
+      return ret;
     } else {
+
       LOG(WARNING) << "write reached end of pipeline";
+      DLOG(INFO) << "wangle::contextImpl::fireWrite: 4, end";
       return folly::makeFuture();
     }
+
+    // DLOG(INFO) << "wangle::contextImpl::fireWrite: 5, end";
   }
 
   folly::Future<folly::Unit> fireWriteException(
@@ -318,9 +332,18 @@ class ContextImpl
   }
 
   // OutboundLink overrides
-  folly::Future<folly::Unit> write(Win msg) override {
+  folly::Future<folly::Unit> write(Win msg) override 
+  {
+
+    DLOG(INFO) << "wangle::contextImpl::write: 1";
     auto guard = this->pipelineWeak_.lock();
-    return this->handler_->write(this, std::forward<Win>(msg));
+    // return this->handler_->write(this, std::forward<Win>(msg));
+
+    DLOG(INFO) << "wangle::contextImpl::write: 2";
+    auto ret = this->handler_->write(this, std::forward<Win>(msg));
+
+    DLOG(INFO) << "wangle::contextImpl::write: 3, end";
+    return ret;
   }
 
   folly::Future<folly::Unit> writeException(
@@ -481,14 +504,27 @@ class OutboundContextImpl
   ~OutboundContextImpl() override = default;
 
   // OutboundHandlerContext overrides
-  folly::Future<folly::Unit> fireWrite(Wout msg) override {
+  folly::Future<folly::Unit> fireWrite(Wout msg) override 
+  {
+
+    DLOG(INFO) << "wangle::OutboundContextImpl::fireWrite: 1";
     auto guard = this->pipelineWeak_.lock();
     if (this->nextOut_) {
-      return this->nextOut_->write(std::forward<Wout>(msg));
+
+      DLOG(INFO) << "wangle::OutboundContextImpl::fireWrite: 2";
+      // return this->nextOut_->write(std::forward<Wout>(msg));
+      auto ret = this->nextOut_->write(std::forward<Wout>(msg));
+
+      DLOG(INFO) << "wangle::OutboundContextImpl::fireWrite: 2.1, end";
+      return ret;
     } else {
+
+      DLOG(INFO) << "wangle::OutboundContextImpl::fireWrite: 3, end";
       LOG(WARNING) << "write reached end of pipeline";
       return folly::makeFuture();
     }
+
+    // DLOG(INFO) << "wangle::OutboundContextImpl::fireWrite: 4, end";
   }
 
   folly::Future<folly::Unit> fireWriteException(
@@ -521,9 +557,17 @@ class OutboundContextImpl
   }
 
   // OutboundLink overrides
-  folly::Future<folly::Unit> write(Win msg) override {
+  folly::Future<folly::Unit> write(Win msg) override 
+  {
+    DLOG(INFO) << "wangle::OutboundContextImpl::write: 1";
     auto guard = this->pipelineWeak_.lock();
-    return this->handler_->write(this, std::forward<Win>(msg));
+    // return this->handler_->write(this, std::forward<Win>(msg));
+
+    DLOG(INFO) << "wangle::OutboundContextImpl::write: 2";
+    auto ret = this->handler_->write(this, std::forward<Win>(msg));
+
+    DLOG(INFO) << "wangle::OutboundContextImpl::write: 3";
+    return ret;
   }
 
   folly::Future<folly::Unit> writeException(

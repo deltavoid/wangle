@@ -36,34 +36,62 @@ class OutputBufferingHandler : public OutboundBytesToBytesHandler,
  public:
   folly::Future<folly::Unit> write(
       Context* ctx,
-      std::unique_ptr<folly::IOBuf> buf) override {
+      std::unique_ptr<folly::IOBuf> buf) override 
+  {
+
+    DLOG(INFO) << "wangle::OutputBufferingHandler::write: 1";
     CHECK(buf);
     if (!queueSends_) {
-      return ctx->fireWrite(std::move(buf));
+
+      DLOG(INFO) << "wangle::OutputBufferingHandler::write: 2";
+      // return ctx->fireWrite(std::move(buf));
+      auto ret = ctx->fireWrite(std::move(buf));
+      
+      DLOG(INFO) << "wangle::OutputBufferingHandler::write: 2.1, end";
+      return ret;
     } else {
+
+      DLOG(INFO) << "wangle::OutputBufferingHandler::write: 3";
       // Delay sends to optimize for fewer syscalls
       if (!sends_) {
+
+        DLOG(INFO) << "wangle::OutputBufferingHandler::write: 4";
         DCHECK(!isLoopCallbackScheduled());
         // Buffer all the sends, and call writev once per event loop.
         sends_ = std::move(buf);
         ctx->getTransport()->getEventBase()->runInLoop(this);
       } else {
+
+        DLOG(INFO) << "wangle::OutputBufferingHandler::write: 5";
         DCHECK(isLoopCallbackScheduled());
         sends_->prependChain(std::move(buf));
       }
+
+      DLOG(INFO) << "wangle::OutputBufferingHandler::write: 6, end";
       return sharedPromise_.getFuture();
     }
+
+    // DLOG(INFO) << "wangle::OutputBufferingHandler::write: 7, end";
   }
 
-  void runLoopCallback() noexcept override {
+  void runLoopCallback() noexcept override 
+  {
+
+    DLOG(INFO) << "wangle::OutputBufferingHandler::runLoopCallback: 1";
     folly::SharedPromise<folly::Unit> sharedPromise;
     std::swap(sharedPromise, sharedPromise_);
+
+    DLOG(INFO) << "wangle::OutputBufferingHandler::runLoopCallback: 2";
     getContext()
         ->fireWrite(std::move(sends_))
         .then([sharedPromise = std::move(sharedPromise)](
             folly::Try<folly::Unit> t) mutable {
+
+          DLOG(INFO) << "wangle::OutputBufferingHandler::runLoopCallback: 3";
           sharedPromise.setTry(std::move(t));
         });
+
+    DLOG(INFO) << "wangle::OutputBufferingHandler::runLoopCallback: 4, end";
   }
 
   void cleanUp() {
