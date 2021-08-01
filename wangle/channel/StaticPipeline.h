@@ -75,10 +75,16 @@ class StaticPipeline<R, W, Handler, Handlers...>
   using Ptr = std::shared_ptr<StaticPipeline>;
 
   template <class... HandlerArgs>
-  static Ptr create(HandlerArgs&&... handlers) {
+  static Ptr create(HandlerArgs&&... handlers) 
+  {
+    DLOG(INFO) << "wangle::StaticPipeline::create: 1";
     auto ptr =  std::shared_ptr<StaticPipeline>(
         new StaticPipeline(std::forward<HandlerArgs>(handlers)...));
+
+    DLOG(INFO) << "wangle::StaticPipeline::create: 2";
     ptr->initialize();
+
+    DLOG(INFO) << "wangle::StaticPipeline::create: 3, end";
     return ptr;
   }
 
