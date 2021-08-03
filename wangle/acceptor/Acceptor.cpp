@@ -213,29 +213,44 @@ bool Acceptor::canAccept(const SocketAddress& address) {
 
 void
 Acceptor::connectionAccepted(
-    int fd, const SocketAddress& clientAddr) noexcept {
+    int fd, const SocketAddress& clientAddr) noexcept 
+{
+  DLOG(INFO) << "wangle::Acceptor::connectionAccepted: 1";
   namespace fsp = folly::portability::sockets;
   if (!canAccept(clientAddr)) {
+
+    DLOG(INFO) << "wangle::Acceptor::connectionAccepted: 2";
     // Send a RST to free kernel memory faster
     struct linger optLinger = {1, 0};
     fsp::setsockopt(fd, SOL_SOCKET, SO_LINGER, &optLinger, sizeof(optLinger));
     close(fd);
+
+    DLOG(INFO) << "wangle::Acceptor::connectionAccepted: 3, end";
     return;
   }
+
+  DLOG(INFO) << "wangle::Acceptor::connectionAccepted: 4";
   auto acceptTime = std::chrono::steady_clock::now();
   for (const auto& opt: socketOptions_) {
     opt.first.apply(fd, opt.second);
   }
 
+  DLOG(INFO) << "wangle::Acceptor::connectionAccepted: 5";
   onDoneAcceptingConnection(fd, clientAddr, acceptTime);
+
+  DLOG(INFO) << "wangle::Acceptor::connectionAccepted: 6, end";
 }
 
 void Acceptor::onDoneAcceptingConnection(
     int fd,
     const SocketAddress& clientAddr,
-    std::chrono::steady_clock::time_point acceptTime) noexcept {
+    std::chrono::steady_clock::time_point acceptTime) noexcept 
+{
+  DLOG(INFO) << "wangle::Acceptor::onDoneAcceptingConnection: 1";
   TransportInfo tinfo;
   processEstablishedConnection(fd, clientAddr, acceptTime, tinfo);
+
+  DLOG(INFO) << "wangle::Acceptor::onDoneAcceptingConnection: 2, end";
 }
 
 void
@@ -243,19 +258,29 @@ Acceptor::processEstablishedConnection(
     int fd,
     const SocketAddress& clientAddr,
     std::chrono::steady_clock::time_point acceptTime,
-    TransportInfo& tinfo) noexcept {
+    TransportInfo& tinfo) noexcept 
+{
+
+  DLOG(INFO) << "wangle::Acceptor::processEstablishedConnection: 1";
   bool shouldDoSSL = false;
   if (accConfig_.isSSL()) {
+
+    DLOG(INFO) << "wangle::Acceptor::processEstablishedConnection: 2";
     CHECK(sslCtxManager_);
     shouldDoSSL = sslCtxManager_->getDefaultSSLCtx() != nullptr;
   }
+  DLOG(INFO) << "wangle::Acceptor::processEstablishedConnection: 3";
   if (shouldDoSSL) {
+
+    DLOG(INFO) << "wangle::Acceptor::processEstablishedConnection: 4";
     AsyncSSLSocket::UniquePtr sslSock(
       makeNewAsyncSSLSocket(
         sslCtxManager_->getDefaultSSLCtx(), base_, fd));
     ++numPendingSSLConns_;
     ++totalNumPendingSSLConns_;
     if (numPendingSSLConns_ > accConfig_.maxConcurrentSSLHandshakes) {
+
+      DLOG(INFO) << "wangle::Acceptor::processEstablishedConnection: 5";
       VLOG(2) << "dropped SSL handshake on " << accConfig_.name <<
         " too many handshakes in progress";
       auto error = SSLErrorEnum::DROPPED;
@@ -264,9 +289,12 @@ Acceptor::processEstablishedConnection(
       auto ex = folly::make_exception_wrapper<SSLException>(
           error, latency, sslSock->getRawBytesReceived());
       sslConnectionError(ex);
+
+      DLOG(INFO) << "wangle::Acceptor::processEstablishedConnection: 6, end";
       return;
     }
 
+    DLOG(INFO) << "wangle::Acceptor::processEstablishedConnection: 7";
     tinfo.tfoSucceded = sslSock->getTFOSucceded();
     startHandshakeManager(
         std::move(sslSock),
@@ -275,6 +303,8 @@ Acceptor::processEstablishedConnection(
         acceptTime,
         tinfo);
   } else {
+
+    DLOG(INFO) << "wangle::Acceptor::processEstablishedConnection: 8";
     tinfo.secure = false;
     tinfo.acceptTime = acceptTime;
     AsyncSocket::UniquePtr sock(makeNewAsyncSocket(base_, fd));
@@ -286,6 +316,8 @@ Acceptor::processEstablishedConnection(
         SecureTransportType::NONE,
         tinfo);
   }
+
+  DLOG(INFO) << "wangle::Acceptor::processEstablishedConnection: 9, end";
 }
 
 void Acceptor::startHandshakeManager(
